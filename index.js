@@ -1,6 +1,6 @@
 const express = require('express')
 const cors = require('cors')
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config()
 const port = process.env.PORT || 7000
 const app = express()
@@ -36,15 +36,30 @@ async function run() {
     // await client.connect();
     const assignmentsCollection = client.db('assignmentsDB').collection('assignments')
 
-    // save a assignment in db 
+    // save a assignment in dataBase
     app.post('/assignments', async(req, res) => {
         const assignmentData = req.body
         const result = await assignmentsCollection.insertOne(assignmentData)
         res.send(result)
     })
+    // get all assignment from dataBase
     app.get('/assignments', async(req, res) => {
         const result = await assignmentsCollection.find().toArray()
         res.send(result)
+    })
+
+    // get single assignment by id
+    app.get('/assignments/:id', async (req, res) => {
+      const id = req.params.id 
+      const query = {_id: new ObjectId(id)}
+      const result = await assignmentsCollection.findOne(query)
+      res.send(result)
+    })
+    app.delete('/assignments/:id', async(req,res) => {
+      const id = req.params.id
+      const query = {_id: new ObjectId(id)}
+      const result = await assignmentsCollection.deleteOne(query)
+      res.send(result)
     })
 
 
