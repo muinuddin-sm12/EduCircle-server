@@ -61,6 +61,20 @@ async function run() {
       const result = await assignmentsCollection.deleteOne(query)
       res.send(result)
     })
+    // update a assignment in dataBase
+    app.put('/assignments/:id', async(req, res) => {
+      const id = req.params.id 
+      const assignmentData = req.body
+      const query = {_id: new ObjectId(id)}
+      const options = {upsert: true}
+      const updateDoc = {
+        $set: {
+          ...assignmentData
+        }
+      }
+      const result = await assignmentsCollection.updateOne(query, updateDoc, options)
+      res.send(result)
+      })
 
 
     // Send a ping to confirm a successful connection
@@ -72,14 +86,6 @@ async function run() {
   }
 }
 run().catch(console.dir);
-
-
-
-
-
-
-
-
 app.get('/', (req, res) => {
     res.send('Hello from EduCircle Server....')
 }) 
