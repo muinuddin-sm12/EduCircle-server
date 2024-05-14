@@ -3,7 +3,8 @@ const cors = require('cors')
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config()
 const jwt = require('jsonwebtoken')
-const cookieParser = require('cookie-parser')
+const bodyParser = require('body-parser');
+// const cookieParser = require('cookie-parser')
 const port = process.env.PORT || 7000
 const app = express()
 
@@ -19,6 +20,24 @@ const corsOptions = {
 }
 app.use(cors(corsOptions))
 app.use(express.json())
+app.use(bodyParser.json());
+// app.use(cookieParser())
+
+// verify jwt middleware
+// const verifyToken = (req, res, next) => {
+//   const token = req.cookie?.token 
+//   if(!token) return res.status(401).send({message:"Unauthorized access"})
+//   if(token) {
+//     jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+//       if(err) {
+//         return res.status(401).send({message:"Unauthorized access"})
+//       }
+//       // console.log(decoded)
+//       req.user = decoded
+//       next()
+//     })
+//   }
+// }
 
 
 
@@ -39,6 +58,7 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     // await client.connect();
     const assignmentsCollection = client.db('assignmentsDB').collection('assignments')
+    const takeAssignmentsCollection = client.db('assignmentsDB').collection('takeAssignments')
 
 
     // jwt generate
@@ -81,8 +101,12 @@ async function run() {
     })
 
     // get single assignment by id
-    app.get('/assignments/:id', async (req, res) => {
+    app.get('/assignments/:id',  async (req, res) => {
       const id = req.params.id 
+      // const tokenId = req.user.id
+      // if(tokenId !== id){
+      //   return res.status(403).send({message: "forbidden access"})
+      // }
       const query = {_id: new ObjectId(id)}
       const result = await assignmentsCollection.findOne(query)
       res.send(result)
@@ -106,6 +130,20 @@ async function run() {
       }
       const result = await assignmentsCollection.updateOne(query, updateDoc, options)
       res.send(result)
+      })
+      // save a take assignment in database
+      app.post('/take', async(req, res) => {
+        const {pdfURL, feedback, status, email, title, mark, img} = req.body 
+        const takeAssignmentsData = {pdfURL, feedback, status, email, title, mark, img}
+        const result = await takeAssignmentsCollection.insertOne(takeAssignmentsData)
+        res.send(result)
+      })
+      // get take assignment by specific user 
+      app.get('/take/:email', async(req, res) => {
+        const email = req.params.email
+        const query = {email}
+        const result = await takeAssignmentsCollection.find(query).toArray()
+        res.send(result)
       })
 
 
