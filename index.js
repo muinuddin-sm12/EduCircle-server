@@ -4,7 +4,7 @@ const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config()
 const jwt = require('jsonwebtoken')
 const bodyParser = require('body-parser');
-// const cookieParser = require('cookie-parser')
+const cookieParser = require('cookie-parser')
 const port = process.env.PORT || 7000
 const app = express()
 
@@ -21,23 +21,23 @@ const corsOptions = {
 app.use(cors(corsOptions))
 app.use(express.json())
 app.use(bodyParser.json());
-// app.use(cookieParser())
+app.use(cookieParser())
 
 // verify jwt middleware
-// const verifyToken = (req, res, next) => {
-//   const token = req.cookie?.token 
-//   if(!token) return res.status(401).send({message:"Unauthorized access"})
-//   if(token) {
-//     jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
-//       if(err) {
-//         return res.status(401).send({message:"Unauthorized access"})
-//       }
-//       // console.log(decoded)
-//       req.user = decoded
-//       next()
-//     })
-//   }
-// }
+const verifyToken = (req, res, next) => {
+  const token = req.cookie?.token 
+  if(!token) return res.status(401).send({message:"Unauthorized access"})
+  if(token) {
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+      if(err) {
+        return res.status(401).send({message:"Unauthorized access"})
+      }
+      // console.log(decoded)
+      req.user = decoded
+      next()
+    })
+  }
+}
 
 
 
@@ -130,19 +130,48 @@ async function run() {
       }
       const result = await assignmentsCollection.updateOne(query, updateDoc, options)
       res.send(result)
-      })
-      // save a take assignment in database
-      app.post('/take', async(req, res) => {
-        const {pdfURL, feedback, status, email, title, mark, img} = req.body 
-        const takeAssignmentsData = {pdfURL, feedback, status, email, title, mark, img}
+    })
+    // save a take assignment in database
+    app.post('/take', async(req, res) => {
+      const {pdfURL, note, status, email, examineeName, title, mark, img} = req.body 
+      const takeAssignmentsData = {pdfURL, note, status, email, examineeName, title, mark, img}
         const result = await takeAssignmentsCollection.insertOne(takeAssignmentsData)
         res.send(result)
       })
-      // get take assignment by specific user 
-      app.get('/take/:email', async(req, res) => {
+      // get assignment data by id
+      app.get('/take/:id', async(req, res) => {
+        const id = req.params.id 
+        const query = {_id: new ObjectId(id)}
+        const result = await takeAssignmentsCollection.findOne(query)
+        res.send(result)
+      })
+      // get all take assignment by specific user 
+      app.get('/take/email/:email', verifyToken, async(req, res) => {
+        const tokenEmail = req.user.email  
         const email = req.params.email
+        if(tokenEmail !== email){
+          return res.status.apply(403).send({message: 'forbidden access'})
+        }
         const query = {email}
         const result = await takeAssignmentsCollection.find(query).toArray()
+        res.send(result)
+      })
+      // get all take assignmetn data 
+      app.get('/take', async(req, res) => {
+        const result = await takeAssignmentsCollection.find().toArray()
+        res.send(result)
+      })
+      app.put('/take/:id', async(req, res) => {
+        const id = req.params.id 
+        const giveMarkData = req.body
+        const query = {_id: new ObjectId(id)}
+        const options = {upsert: true}
+        const updateDoc = {
+          $set: {
+            ...giveMarkData
+          }
+        }
+        const result = await takeAssignmentsCollection.updateOne(query, updateDoc, options)
         res.send(result)
       })
 
