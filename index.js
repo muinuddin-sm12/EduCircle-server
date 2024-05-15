@@ -146,12 +146,12 @@ async function run() {
         res.send(result)
       })
       // get all take assignment by specific user 
-      app.get('/take/email/:email', verifyToken, async(req, res) => {
-        const tokenEmail = req.user.email  
+      app.get('/take/email/:email', async(req, res) => {
+        // const tokenEmail = req.user.email  
         const email = req.params.email
-        if(tokenEmail !== email){
-          return res.status.apply(403).send({message: 'forbidden access'})
-        }
+        // if(tokenEmail !== email){
+        //   return res.status.apply(403).send({message: 'forbidden access'})
+        // }
         const query = {email}
         const result = await takeAssignmentsCollection.find(query).toArray()
         res.send(result)
