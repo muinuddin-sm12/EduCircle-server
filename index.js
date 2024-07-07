@@ -13,7 +13,8 @@ const corsOptions = {
         'http://localhost:5173',
         'http://localhost:5174',
         'https://educircle-b9a11.web.app',
-        'https://educircle-b9a11.firebaseapp.com'
+        'https://educircle-b9a11.firebaseapp.com',
+        'https://edu-circle-web.netlify.app'
     ],
     credentials: true,
     optionSuccessStatus: 200,
